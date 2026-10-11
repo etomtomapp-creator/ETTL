@@ -29,16 +29,16 @@ export const Header: React.FC<HeaderProps> = ({ onRequestProspectus, onReplayInt
   };
 
   const navLinks = [
-    { label: 'Fleet Showroom', href: '#showroom' },
-    { label: 'Investment Model', href: '#investment' },
-    { label: 'ROI Calculator', href: '#calculator' },
-    { label: 'How It Works', href: '#how-it-works' },
-    { label: 'Partners', href: '#partners' },
+    { label: 'ফ্লিট শোরুম', href: '#showroom' },
+    { label: 'বিনিয়োগ মডেল', href: '#investment' },
+    { label: 'আরওআই ক্যালকুলেটর', href: '#calculator' },
+    { label: 'কার্যপদ্ধতি', href: '#how-it-works' },
+    { label: 'পার্টনার্স', href: '#partners' },
   ];
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 font-sans ${
         isScrolled
           ? 'bg-white/95 backdrop-blur-xl border-b border-pink-100 shadow-sm py-3.5'
           : 'bg-white/80 backdrop-blur-md border-b border-pink-50 py-5'
@@ -53,13 +53,13 @@ export const Header: React.FC<HeaderProps> = ({ onRequestProspectus, onReplayInt
           <span className="text-[#D70F64] group-hover:text-[#E21B70] transition-colors">
             ETTL
           </span>
-          <span className="text-xs uppercase tracking-widest text-[#D70F64] font-sans font-semibold border-l border-pink-200 pl-2">
-            Investment
+          <span className="text-xs uppercase tracking-widest text-[#D70F64] font-semibold border-l border-pink-200 pl-2">
+            ইনভেস্টমেন্ট
           </span>
         </a>
 
-        {/* Zone 2: 4-5 Clean single-line text navigation links */}
-        <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-700">
+        {/* Zone 2: 4-5 Clean single-line text navigation links in Bangla */}
+        <nav className="hidden lg:flex items-center gap-8 text-sm font-semibold text-slate-700">
           {navLinks.map((link) => (
             <a
               key={link.label}
@@ -81,16 +81,16 @@ export const Header: React.FC<HeaderProps> = ({ onRequestProspectus, onReplayInt
               onReplayIntro();
             }}
             className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#D70F64] bg-pink-50 hover:bg-pink-100/80 border border-pink-200 transition-colors whitespace-nowrap cursor-pointer"
-            title="Replay Cinematic 3D Intro"
+            title="ইন্ট্রো পুনরায় দেখুন"
           >
             <Sparkles className="w-3.5 h-3.5 text-[#D70F64]" />
-            <span>Replay Intro</span>
+            <span>ইন্ট্রো দেখুন</span>
           </button>
 
           <button
             onClick={handleToggleSound}
             className="p-2 rounded-xl text-slate-600 hover:text-[#D70F64] bg-slate-50 hover:bg-pink-50 border border-slate-200 hover:border-pink-200 transition-colors cursor-pointer"
-            title={isMuted ? 'Unmute Ambient Sound' : 'Mute Ambient Sound'}
+            title={isMuted ? 'শব্দ চালু করুন' : 'শব্দ বন্ধ করুন'}
           >
             {isMuted ? <VolumeX className="w-4 h-4 text-slate-400" /> : <Volume2 className="w-4 h-4 text-[#D70F64]" />}
           </button>
@@ -100,9 +100,9 @@ export const Header: React.FC<HeaderProps> = ({ onRequestProspectus, onReplayInt
               audioEngine.playClick();
               onRequestProspectus();
             }}
-            className="px-5 py-2.5 text-xs md:text-sm font-semibold text-white bg-[#D70F64] hover:bg-[#E21B70] rounded-xl transition-all shadow-md shadow-[#D70F64]/25 hover:shadow-lg hover:shadow-[#D70F64]/35 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap shrink-0 cursor-pointer"
+            className="px-5 py-2.5 text-xs md:text-sm font-bold text-white bg-[#D70F64] hover:bg-[#E21B70] rounded-xl transition-all shadow-md shadow-[#D70F64]/25 hover:shadow-lg hover:shadow-[#D70F64]/35 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap shrink-0 cursor-pointer"
           >
-            Request Prospectus
+            প্রসপেক্টাস অনুরোধ
           </button>
         </div>
       </div>

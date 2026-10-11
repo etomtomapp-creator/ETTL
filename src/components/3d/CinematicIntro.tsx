@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
-import { Volume2, VolumeX, FastForward, ArrowRight, ShieldCheck, DollarSign, Info } from 'lucide-react';
+import { Volume2, VolumeX, FastForward, ArrowRight, ShieldCheck, DollarSign, Info, User, Sparkles } from 'lucide-react';
 import { audioEngine } from '../../services/audioService';
 
 interface CinematicIntroProps {
@@ -9,12 +9,12 @@ interface CinematicIntroProps {
 
 type IntroPhase = 
   | 'approaching'      // Scene 1: Client walks outside towards building
-  | 'entering'         // Scene 2: Doors open, enters grand atrium
-  | 'at_desk'          // Scene 3: Reaches receptionist desk, dialogue
+  | 'entering'         // Scene 2: Glass doors slide open, enters atrium
+  | 'at_desk'          // Scene 3: Reaches receptionist desk, dialogue exchange
   | 'choosing'         // Scene 4: Floating 3D decision gate
-  | 'walking_corridor' // Scene 5: Receptionist stands up & escorts down corridor
-  | 'at_manager'       // Scene 6: Executive suite briefing
-  | 'transitioning';   // Scene 7: Cinematic push-through into website
+  | 'walking_corridor' // Scene 5: Receptionist escorts client down luxury corridor
+  | 'at_manager'       // Scene 6: Executive suite briefing with managing partner
+  | 'transitioning';   // Scene 7: Cinematic push-through into main platform
 
 export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -22,9 +22,10 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
   const [userChoice, setUserChoice] = useState<'prices' | 'details' | null>(null);
   const [isMuted, setIsMuted] = useState<boolean>(audioEngine.getMuted());
   
-  // Dialogue state
-  const [dialogueSpeaker, setDialogueSpeaker] = useState<string>('ETTL Concierge');
-  const [dialogueText, setDialogueText] = useState<string>('Approaching ETTL Investment Zone headquarters at twilight...');
+  // Bengali dialogue state in Hind Siliguri
+  const [dialogueSpeaker, setDialogueSpeaker] = useState<string>('ইটিটিএল কনসিয়ার্জ');
+  const [dialogueRole, setDialogueRole] = useState<'concierge' | 'receptionist' | 'client' | 'manager'>('concierge');
+  const [dialogueText, setDialogueText] = useState<string>('গোধূলিলগ্নে ইটিটিএল ইনভেস্টমেন্ট জোন সদর দফতরে আগমন...');
   const [displayedText, setDisplayedText] = useState<string>('');
 
   // Three.js instances
@@ -40,32 +41,50 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
   const leftDoorRef = useRef<THREE.Mesh | null>(null);
   const rightDoorRef = useRef<THREE.Mesh | null>(null);
   const particlesRef = useRef<THREE.Points | null>(null);
+  const holoPlaneRef = useRef<THREE.Mesh | null>(null);
 
   // Door opening progress timer
   const doorOpenProgress = useRef<number>(0);
 
-  // Frame-rate independent cinematic camera targets
+  // Smooth cinematic camera damping targets
   const cameraTargetPos = useRef<THREE.Vector3>(new THREE.Vector3(0.6, 2.2, 20));
   const cameraTargetLookAt = useRef<THREE.Vector3>(new THREE.Vector3(0, 1.75, 12));
   const cameraCurrentLookAt = useRef<THREE.Vector3>(new THREE.Vector3(0, 1.75, 12));
 
-  // Audio footstep throttle
+  // Audio footstep and vocal throttle
   const lastFootstepTime = useRef<number>(0);
+  const lastVoiceTime = useRef<number>(0);
 
-  // Progressive subtitle typewriter reveal
+  // Progressive Bengali typewriter text reveal with vocal cadence
   useEffect(() => {
     let index = 0;
     setDisplayedText('');
     const interval = setInterval(() => {
       index++;
       setDisplayedText(dialogueText.slice(0, index));
+
+      // Play soft speech formant for dialogue when characters speak
+      if (index % 3 === 0 && dialogueRole !== 'concierge') {
+        const now = Date.now();
+        if (now - lastVoiceTime.current > 140) {
+          lastVoiceTime.current = now;
+          audioEngine.playSpeechVoice(
+            dialogueRole === 'receptionist'
+              ? 'receptionist'
+              : dialogueRole === 'manager'
+              ? 'manager'
+              : 'client'
+          );
+        }
+      }
+
       if (index >= dialogueText.length) {
         clearInterval(interval);
       }
-    }, 20);
+    }, 28);
 
     return () => clearInterval(interval);
-  }, [dialogueText]);
+  }, [dialogueText, dialogueRole]);
 
   const handleToggleSound = () => {
     const muted = audioEngine.toggleMute();
@@ -89,11 +108,12 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     audioEngine.playClick();
     setPhase('walking_corridor');
 
-    setDialogueSpeaker('Receptionist');
+    setDialogueSpeaker('অভ্যর্থনাকারী');
+    setDialogueRole('receptionist');
     setDialogueText(
       choice === 'prices'
-        ? '“Right this way, Sir. I will escort you to our Managing Partner to review portfolio yields and vehicle pricing.”'
-        : '“Right this way, Sir. I will escort you to our Managing Partner to examine the fleet expansion model and security covenants.”'
+        ? '“এই দিক দিয়ে আসুন, স্যার। আমি আপনাকে আমাদের ম্যানেজিং পার্টনারের কাছে নিয়ে যাচ্ছি পোর্টফোলিও লাভ ও যানবাহনের মূল্য পর্যালোচনার জন্য।”'
+        : '“এই দিক দিয়ে আসুন, স্যার। আমি আপনাকে আমাদের ম্যানেজিং পার্টনারের কাছে নিয়ে যাচ্ছি ফ্লিট সম্প্রসারণ মডেল ও নিরাপত্তা চুক্তি সম্পর্কে আলোচনার জন্য।”'
     );
 
     audioEngine.playDialogueChime('receptionist');
@@ -115,7 +135,7 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     setPhase(targetPhase);
   };
 
-  // Build the 3D scene & high-fidelity rigging
+  // Build the enhanced 3D scene, realistic characters, and architectural environment
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
@@ -125,14 +145,14 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     // 1. Scene, Camera, Renderer
     const scene = new THREE.Scene();
     sceneRef.current = scene;
-    scene.background = new THREE.Color(0x0e0814); // Twilight dusk with deep pink atmospheric horizon
-    scene.fog = new THREE.FogExp2(0x130a1c, 0.02);
+    scene.background = new THREE.Color(0x0e0814); // Twilight dusk with deep magenta atmospheric horizon
+    scene.fog = new THREE.FogExp2(0x130a1c, 0.018);
 
     const camera = new THREE.PerspectiveCamera(
       46,
       container.clientWidth / container.clientHeight,
       0.1,
-      150
+      160
     );
     camera.position.set(0.6, 2.2, 21);
     cameraRef.current = camera;
@@ -141,18 +161,18 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.25;
+    renderer.toneMappingExposure = 1.3;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     rendererRef.current = renderer;
     container.appendChild(renderer.domElement);
 
-    // 2. Lighting System
-    const ambientLight = new THREE.AmbientLight(0x351d38, 1.4);
+    // 2. Comprehensive Architectural Lighting System
+    const ambientLight = new THREE.AmbientLight(0x381f3b, 1.4);
     scene.add(ambientLight);
 
     // Moonlight / Dusk Key Light
-    const skyLight = new THREE.DirectionalLight(0xffe6f2, 2.0);
+    const skyLight = new THREE.DirectionalLight(0xffe6f2, 2.2);
     skyLight.position.set(-18, 25, 20);
     skyLight.castShadow = true;
     skyLight.shadow.mapSize.width = 2048;
@@ -167,31 +187,35 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     scene.add(atriumSpot);
     scene.add(atriumSpot.target);
 
-    // Foodpanda Pink Architectural Glow (#D70F64)
-    const pinkPendant = new THREE.PointLight(0xd70f64, 3.4, 16);
+    // Signature Foodpanda Pink Architectural Glow (#D70F64)
+    const pinkPendant = new THREE.PointLight(0xd70f64, 4.0, 18);
     pinkPendant.position.set(0, 4.8, 2);
     scene.add(pinkPendant);
 
+    const entranceGlow = new THREE.PointLight(0xd70f64, 3.2, 14);
+    entranceGlow.position.set(0, 3.0, 8);
+    scene.add(entranceGlow);
+
     // Executive Office Pendant
-    const officeSpot = new THREE.SpotLight(0xfff0f5, 3.4, 28, Math.PI / 4, 0.45, 1.1);
+    const officeSpot = new THREE.SpotLight(0xfff0f5, 3.6, 28, Math.PI / 4, 0.45, 1.1);
     officeSpot.position.set(0, 7.5, -26);
     officeSpot.target.position.set(0, 1, -28);
     scene.add(officeSpot);
     scene.add(officeSpot.target);
 
     // 3. Atmospheric Floating Dust/Sparkle Particles
-    const particleCount = 240;
+    const particleCount = 280;
     const particleGeo = new THREE.BufferGeometry();
     const particlePositions = new Float32Array(particleCount * 3);
     for (let i = 0; i < particleCount * 3; i += 3) {
-      particlePositions[i] = (Math.random() - 0.5) * 26;
+      particlePositions[i] = (Math.random() - 0.5) * 28;
       particlePositions[i + 1] = Math.random() * 8.5;
-      particlePositions[i + 2] = (Math.random() - 0.5) * 48;
+      particlePositions[i + 2] = (Math.random() - 0.5) * 52;
     }
     particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
     const particleMat = new THREE.PointsMaterial({
       color: 0xf472b6,
-      size: 0.075,
+      size: 0.08,
       transparent: true,
       opacity: 0.65,
       blending: THREE.AdditiveBlending,
@@ -200,7 +224,7 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     particlesRef.current = particles;
     scene.add(particles);
 
-    // 4. Architecture Construction
+    // 4. Exterior Architecture & Walkway
     // Wet Exterior Asphalt
     const pavementGeo = new THREE.PlaneGeometry(60, 45);
     const pavementMat = new THREE.MeshStandardMaterial({
@@ -214,11 +238,11 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     pavement.receiveShadow = true;
     scene.add(pavement);
 
-    // Walkway path in pure white travertine
+    // Walkway path in pure white Italian travertine
     const walkwayGeo = new THREE.BoxGeometry(7, 0.16, 24);
     const walkwayMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      roughness: 0.25,
+      roughness: 0.22,
       metalness: 0.1,
     });
     const walkway = new THREE.Mesh(walkwayGeo, walkwayMat);
@@ -246,22 +270,56 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     facade.position.set(0, 9, 2);
     scene.add(facade);
 
-    // Illuminated Neon "ETTL INVESTMENT ZONE" Brand Header
-    const signBoard = new THREE.Mesh(
-      new THREE.BoxGeometry(13, 1.4, 0.25),
-      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 })
-    );
-    signBoard.position.set(0, 6.8, 3.0);
+    // Exterior Glass Panels with Pink Neon mullions
+    for (let x = -18; x <= 18; x += 6) {
+      if (Math.abs(x) < 4) continue; // Entrance clearance
+      const windowMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(4.8, 12, 0.2),
+        new THREE.MeshPhysicalMaterial({
+          color: 0xffffff,
+          transmission: 0.85,
+          roughness: 0.1,
+          transparent: true,
+          opacity: 0.7,
+        })
+      );
+      windowMesh.position.set(x, 7, 2.8);
+      scene.add(windowMesh);
+
+      const neonPillar = new THREE.Mesh(new THREE.BoxGeometry(0.15, 12, 0.25), stripMat);
+      neonPillar.position.set(x + 2.5, 7, 2.9);
+      scene.add(neonPillar);
+    }
+
+    // High-Resolution Canvas Texture Signboard: "ETTL INVESTMENT ZONE / ইটিটিএল ইনভেস্টমেন্ট জোন"
+    const signCanvas = document.createElement('canvas');
+    signCanvas.width = 1200;
+    signCanvas.height = 300;
+    const signCtx = signCanvas.getContext('2d');
+    if (signCtx) {
+      signCtx.fillStyle = '#FFFFFF';
+      signCtx.fillRect(0, 0, 1200, 300);
+      signCtx.lineWidth = 14;
+      signCtx.strokeStyle = '#D70F64';
+      signCtx.strokeRect(10, 10, 1180, 280);
+
+      signCtx.fillStyle = '#D70F64';
+      signCtx.font = 'bold 68px "Hind Siliguri", sans-serif';
+      signCtx.textAlign = 'center';
+      signCtx.textBaseline = 'middle';
+      signCtx.fillText('ETTL INVESTMENT ZONE', 600, 105);
+
+      signCtx.fillStyle = '#0F172A';
+      signCtx.font = '600 50px "Hind Siliguri", sans-serif';
+      signCtx.fillText('ইটিটিএল ইনভেস্টমেন্ট জোন', 600, 205);
+    }
+    const signTexture = new THREE.CanvasTexture(signCanvas);
+    const signBoardMat = new THREE.MeshBasicMaterial({ map: signTexture });
+    const signBoard = new THREE.Mesh(new THREE.BoxGeometry(13.5, 2.2, 0.2), signBoardMat);
+    signBoard.position.set(0, 7.0, 3.0);
     scene.add(signBoard);
 
-    const neonSign = new THREE.Mesh(
-      new THREE.BoxGeometry(9.2, 0.35, 0.2),
-      new THREE.MeshBasicMaterial({ color: 0xd70f64 })
-    );
-    neonSign.position.set(0, 6.8, 3.14);
-    scene.add(neonSign);
-
-    // Glass Canopy
+    // Glass Entrance Canopy with Steel Tie Rods
     const canopy = new THREE.Mesh(
       new THREE.BoxGeometry(11, 0.25, 5.5),
       new THREE.MeshPhysicalMaterial({
@@ -307,13 +365,24 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     const lobbyFloorMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       roughness: 0.1,
-      metalness: 0.3,
+      metalness: 0.35,
     });
     const lobbyFloor = new THREE.Mesh(lobbyFloorGeo, lobbyFloorMat);
     lobbyFloor.rotation.x = -Math.PI / 2;
     lobbyFloor.position.set(0, 0, -14);
     lobbyFloor.receiveShadow = true;
     scene.add(lobbyFloor);
+
+    // Lobby Marble Floor Grid Accent Lines (Subtle Pink Inlays)
+    for (let gz = 2; gz >= -32; gz -= 4) {
+      const lineMesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(24, 0.04),
+        new THREE.MeshBasicMaterial({ color: 0xfce7f3 })
+      );
+      lineMesh.rotation.x = -Math.PI / 2;
+      lineMesh.position.set(0, 0.01, gz);
+      scene.add(lineMesh);
+    }
 
     // Lobby Walls with Fluted Sconces
     const wallMat = new THREE.MeshStandardMaterial({ color: 0xf8f9fa, roughness: 0.5 });
@@ -325,14 +394,23 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     rightWall.position.set(11, 5, -14);
     scene.add(rightWall);
 
+    // Architectural Sconces with Foodpanda Pink Accent Lighting
     for (let z = 0; z >= -26; z -= 6.5) {
       const sconce = new THREE.Mesh(new THREE.BoxGeometry(0.3, 2.0, 0.2), new THREE.MeshStandardMaterial({ color: 0xd70f64, metalness: 0.8 }));
       sconce.position.set(-10.5, 4.8, z);
       scene.add(sconce);
 
+      const sconceLight = new THREE.PointLight(0xd70f64, 1.2, 5);
+      sconceLight.position.set(-10.2, 4.8, z);
+      scene.add(sconceLight);
+
       const sconceR = sconce.clone();
       sconceR.position.set(10.5, 4.8, z);
       scene.add(sconceR);
+
+      const sconceLightR = new THREE.PointLight(0xd70f64, 1.2, 5);
+      sconceLightR.position.set(10.2, 4.8, z);
+      scene.add(sconceLightR);
     }
 
     // Modern Curved Reception Desk
@@ -351,23 +429,58 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     deskFront.position.set(0, 0.6, -5.4);
     deskGroup.add(deskFront);
 
-    // Foodpanda Pink illuminated logo plate
+    // Foodpanda Pink illuminated logo plate on Reception Desk
     const deskLogo = new THREE.Mesh(
-      new THREE.BoxGeometry(1.8, 0.35, 0.1),
+      new THREE.BoxGeometry(2.2, 0.4, 0.1),
       new THREE.MeshBasicMaterial({ color: 0xd70f64 })
     );
     deskLogo.position.set(0, 0.65, -5.28);
     deskGroup.add(deskLogo);
+
+    // Holographic Desktop Terminal Screen
+    const holoGeo = new THREE.PlaneGeometry(1.6, 0.9);
+    const holoCanvas = document.createElement('canvas');
+    holoCanvas.width = 512;
+    holoCanvas.height = 256;
+    const holoCtx = holoCanvas.getContext('2d');
+    if (holoCtx) {
+      holoCtx.fillStyle = 'rgba(215, 15, 100, 0.15)';
+      holoCtx.fillRect(0, 0, 512, 256);
+      holoCtx.strokeStyle = '#D70F64';
+      holoCtx.lineWidth = 4;
+      holoCtx.strokeRect(4, 4, 504, 248);
+      holoCtx.fillStyle = '#D70F64';
+      holoCtx.font = 'bold 28px sans-serif';
+      holoCtx.fillText('ETTL FLEET ACTIVE', 30, 50);
+      holoCtx.fillStyle = '#0F172A';
+      holoCtx.font = '22px sans-serif';
+      holoCtx.fillText('UTILIZATION: 88.5%', 30, 100);
+      holoCtx.fillText('ANNUAL YIELD: 22.4%', 30, 145);
+      holoCtx.fillText('SECURED TITLES: 100%', 30, 190);
+    }
+    const holoTex = new THREE.CanvasTexture(holoCanvas);
+    const holoMat = new THREE.MeshBasicMaterial({
+      map: holoTex,
+      transparent: true,
+      opacity: 0.85,
+      side: THREE.DoubleSide,
+    });
+    const holoPlane = new THREE.Mesh(holoGeo, holoMat);
+    holoPlane.position.set(0, 1.9, -6.4);
+    holoPlane.rotation.x = -0.15;
+    deskGroup.add(holoPlane);
+    holoPlaneRef.current = holoPlane;
+
     scene.add(deskGroup);
 
-    // Decorative luxury planters
+    // Decorative luxury planters with lush indoor foliage
     const planterMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
-    const plantMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.6 });
+    const plantMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.6 });
 
     const createPlanter = (x: number, z: number) => {
       const p = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.5, 1.3, 16), planterMat);
       p.position.set(x, 0.65, z);
-      const bush = new THREE.Mesh(new THREE.SphereGeometry(0.9, 8, 8), plantMat);
+      const bush = new THREE.Mesh(new THREE.SphereGeometry(0.9, 12, 12), plantMat);
       bush.position.set(x, 1.6, z);
       scene.add(p);
       scene.add(bush);
@@ -375,13 +488,21 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     createPlanter(-5.0, -5.5);
     createPlanter(5.0, -5.5);
 
-    // Executive Director Suite
+    // Executive Director Suite Office
     const officeDesk = new THREE.Mesh(
       new THREE.BoxGeometry(5.6, 0.25, 2.6),
       new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, metalness: 0.1 })
     );
     officeDesk.position.set(0, 1.1, -29);
     scene.add(officeDesk);
+
+    // Trophy on Director Desk
+    const trophy = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.12, 0.2, 0.5, 12),
+      new THREE.MeshStandardMaterial({ color: 0xd70f64, metalness: 0.9, roughness: 0.15 })
+    );
+    trophy.position.set(1.8, 1.45, -29);
+    scene.add(trophy);
 
     // Panoramic Skyline Glass Window behind Director
     const windowGeo = new THREE.PlaneGeometry(20, 8.5);
@@ -390,6 +511,7 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     backWindow.position.set(0, 5, -34.5);
     scene.add(backWindow);
 
+    // Twilight Skyscraper Horizon with Foodpanda Pink glowing windows
     for (let x = -9; x <= 9; x += 1.8) {
       const h = 3.5 + Math.sin(x * 1.8) * 2.2;
       const bldg = new THREE.Mesh(
@@ -407,17 +529,23 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
       scene.add(winDots);
     }
 
-    // 5. Realistic Human Biomechanical Character Rig
-    const createArticulatedCharacter = (suitColor: number, shirtColor: number, hairColor: number) => {
+    // 5. Realistic Human Biomechanical Character Rigging with Anatomy & Styling
+    const createArticulatedCharacter = (
+      type: 'client' | 'receptionist' | 'manager',
+      suitColor: number,
+      shirtColor: number,
+      hairColor: number
+    ) => {
       const root = new THREE.Group();
 
       const suitMat = new THREE.MeshStandardMaterial({ color: suitColor, roughness: 0.55, metalness: 0.1 });
       const shirtMat = new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.35 });
-      const skinMat = new THREE.MeshStandardMaterial({ color: 0xf6c8b0, roughness: 0.65 });
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xf5cfb8, roughness: 0.65 });
       const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.8 });
       const shoeMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3 });
+      const accentMat = new THREE.MeshStandardMaterial({ color: 0xd70f64, roughness: 0.3 }); // Foodpanda Pink
 
-      // Contact Shadow Disc (Anchors character realistically to the ground)
+      // Ground Contact Shadow Disc
       const shadowGeo = new THREE.RingGeometry(0, 0.52, 24);
       const shadowMat = new THREE.MeshBasicMaterial({
         color: 0x000000,
@@ -430,49 +558,93 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
       contactShadow.position.y = 0.02;
       root.add(contactShadow);
 
-      // Pelvis / Hips
+      // Pelvis / Hips Center
       const pelvis = new THREE.Group();
       pelvis.position.y = 1.15;
       root.add(pelvis);
 
-      // Spine & Torso
+      // Spine & Torso Group
       const torso = new THREE.Group();
       torso.position.y = 0.45;
       pelvis.add(torso);
 
-      const chestMesh = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.95, 0.4), suitMat);
+      // Chest & Waist Mesh
+      const chestWidth = type === 'receptionist' ? 0.62 : 0.74;
+      const chestDepth = type === 'receptionist' ? 0.34 : 0.42;
+      const chestMesh = new THREE.Mesh(new THREE.BoxGeometry(chestWidth, 0.95, chestDepth), suitMat);
       chestMesh.position.y = 0;
       chestMesh.castShadow = true;
       torso.add(chestMesh);
 
-      // Foodpanda Pink Necktie
-      const tie = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.65, 0.06), shirtMat);
-      tie.position.set(0, 0.08, 0.22);
-      torso.add(tie);
+      // Necktie / Scarf in Foodpanda Pink (#D70F64)
+      if (type === 'receptionist') {
+        // Elegant Silk Scarf draped over collar
+        const scarf = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.32, 0.1), accentMat);
+        scarf.position.set(0, 0.35, 0.2);
+        torso.add(scarf);
+      } else {
+        // Executive Pink Necktie
+        const tie = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.65, 0.06), accentMat);
+        tie.position.set(0, 0.08, 0.23);
+        torso.add(tie);
+      }
 
       // Head & Neck
       const headGroup = new THREE.Group();
       headGroup.position.set(0, 0.72, 0);
       torso.add(headGroup);
 
-      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.2, 12), skinMat);
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.2, 12), skinMat);
       neck.position.y = 0;
       headGroup.add(neck);
 
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 16), skinMat);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 18, 18), skinMat);
       head.position.y = 0.22;
       headGroup.add(head);
 
-      const hair = new THREE.Mesh(new THREE.SphereGeometry(0.26, 14, 14), hairMat);
-      hair.position.set(0, 0.28, -0.04);
-      headGroup.add(hair);
+      // Facial features: Eyes & Eyebrows
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+      const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), eyeMat);
+      eyeL.position.set(-0.08, 0.24, 0.22);
+      headGroup.add(eyeL);
+
+      const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), eyeMat);
+      eyeR.position.set(0.08, 0.24, 0.22);
+      headGroup.add(eyeR);
+
+      // Manager executive glasses
+      if (type === 'manager') {
+        const glassesFrame = new THREE.Mesh(
+          new THREE.BoxGeometry(0.28, 0.08, 0.05),
+          new THREE.MeshStandardMaterial({ color: 0xd70f64, metalness: 0.9 })
+        );
+        glassesFrame.position.set(0, 0.24, 0.24);
+        headGroup.add(glassesFrame);
+      }
+
+      // Styled Haircut
+      if (type === 'receptionist') {
+        // Elegant corporate updo bun with hair volume
+        const hairBase = new THREE.Mesh(new THREE.SphereGeometry(0.26, 16, 16), hairMat);
+        hairBase.position.set(0, 0.28, -0.04);
+        headGroup.add(hairBase);
+
+        const hairBun = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12), hairMat);
+        hairBun.position.set(0, 0.38, -0.2);
+        headGroup.add(hairBun);
+      } else {
+        // Modern executive haircut with side volume
+        const hair = new THREE.Mesh(new THREE.SphereGeometry(0.26, 16, 16), hairMat);
+        hair.position.set(0, 0.29, -0.04);
+        headGroup.add(hair);
+      }
 
       // Left Arm with Shoulder, Elbow, and Wrist articulation
       const leftShoulder = new THREE.Group();
-      leftShoulder.position.set(-0.46, 0.38, 0);
+      leftShoulder.position.set(-chestWidth / 2 - 0.1, 0.38, 0);
       torso.add(leftShoulder);
 
-      const upperArmL = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.42, 12), suitMat);
+      const upperArmL = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.42, 12), suitMat);
       upperArmL.position.y = -0.21;
       leftShoulder.add(upperArmL);
 
@@ -480,20 +652,30 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
       leftElbow.position.set(0, -0.42, 0);
       leftShoulder.add(leftElbow);
 
-      const foreArmL = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.4, 12), suitMat);
+      const foreArmL = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.4, 12), suitMat);
       foreArmL.position.y = -0.2;
       leftElbow.add(foreArmL);
 
-      const handL = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), skinMat);
-      handL.position.y = -0.42;
+      // Wristwatch on client
+      if (type === 'client') {
+        const watch = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.085, 0.085, 0.06, 12),
+          new THREE.MeshStandardMaterial({ color: 0xd70f64, metalness: 0.85 })
+        );
+        watch.position.y = -0.38;
+        leftElbow.add(watch);
+      }
+
+      const handL = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 10), skinMat);
+      handL.position.y = -0.43;
       leftElbow.add(handL);
 
       // Right Arm
       const rightShoulder = new THREE.Group();
-      rightShoulder.position.set(0.46, 0.38, 0);
+      rightShoulder.position.set(chestWidth / 2 + 0.1, 0.38, 0);
       torso.add(rightShoulder);
 
-      const upperArmR = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.42, 12), suitMat);
+      const upperArmR = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.42, 12), suitMat);
       upperArmR.position.y = -0.21;
       rightShoulder.add(upperArmR);
 
@@ -501,12 +683,12 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
       rightElbow.position.set(0, -0.42, 0);
       rightShoulder.add(rightElbow);
 
-      const foreArmR = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.4, 12), suitMat);
+      const foreArmR = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.4, 12), suitMat);
       foreArmR.position.y = -0.2;
       rightElbow.add(foreArmR);
 
-      const handR = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), skinMat);
-      handR.position.y = -0.42;
+      const handR = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 10), skinMat);
+      handR.position.y = -0.43;
       rightElbow.add(handR);
 
       // Left Leg with Hip, Knee, and Ankle articulation
@@ -530,8 +712,8 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
       leftAnkle.position.set(0, -0.52, 0);
       leftKnee.add(leftAnkle);
 
-      const shoeL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.14, 0.36), shoeMat);
-      shoeL.position.set(0, -0.06, 0.08);
+      const shoeL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.14, 0.38), shoeMat);
+      shoeL.position.set(0, -0.06, 0.09);
       leftAnkle.add(shoeL);
 
       // Right Leg with Hip, Knee, and Ankle articulation
@@ -555,8 +737,8 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
       rightAnkle.position.set(0, -0.52, 0);
       rightKnee.add(rightAnkle);
 
-      const shoeR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.14, 0.36), shoeMat);
-      shoeR.position.set(0, -0.06, 0.08);
+      const shoeR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.14, 0.38), shoeMat);
+      shoeR.position.set(0, -0.06, 0.09);
       rightAnkle.add(shoeR);
 
       return {
@@ -577,30 +759,30 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
       };
     };
 
-    // Client ("You")
-    const client = createArticulatedCharacter(0x0f172a, 0xd70f64, 0x241710);
+    // Client ("You" / বিনিয়োগকারী)
+    const client = createArticulatedCharacter('client', 0x0f172a, 0xd70f64, 0x241710);
     client.root.position.set(0, 0, 16);
     scene.add(client.root);
     clientRef.current = client;
 
-    // Receptionist in white with Foodpanda Pink scarf
-    const receptionist = createArticulatedCharacter(0xffffff, 0xd70f64, 0x3d2015);
+    // Receptionist in crisp white blazer with Foodpanda Pink scarf
+    const receptionist = createArticulatedCharacter('receptionist', 0xffffff, 0xd70f64, 0x3d2015);
     receptionist.root.position.set(0.3, 0, -7.5);
     scene.add(receptionist.root);
     receptionistRef.current = receptionist;
 
-    // Managing Partner in Director Navy
-    const manager = createArticulatedCharacter(0x1e293b, 0xd70f64, 0x222222);
+    // Managing Partner in Director Navy with Pink Pocket Square
+    const manager = createArticulatedCharacter('manager', 0x1e293b, 0xd70f64, 0x222222);
     manager.root.position.set(0, 0, -29.8);
     scene.add(manager.root);
     managerRef.current = manager;
 
-    // 6. Cinematic Master Animation Loop with Frame-Rate Independent Physics
+    // 6. Master Animation Loop with Biomechanical Kinematics & Smooth Camera Lerp
     let clock = new THREE.Clock();
 
     const animate = () => {
       frameIdRef.current = requestAnimationFrame(animate);
-      const delta = Math.min(clock.getDelta(), 0.1); // Cap delta to prevent frame spikes
+      const delta = Math.min(clock.getDelta(), 0.1);
       const elapsed = clock.getElapsedTime();
 
       // Atmospheric particle gentle swirl
@@ -608,42 +790,46 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
         particlesRef.current.rotation.y = elapsed * 0.02;
       }
 
-      // Realistic Biomechanical Walking Gait with Foot Roll & Forward Lean
+      // Holographic terminal subtle floating pulse
+      if (holoPlaneRef.current) {
+        holoPlaneRef.current.position.y = 1.9 + Math.sin(elapsed * 2.0) * 0.015;
+      }
+
+      // Biomechanical Harmonic Walking Engine:
+      // Includes pelvic bounce, lateral weight shift, realistic foot-roll & arm counter-swing
       const applyRealisticWalk = (char: any, speed: number, moveDelta: number) => {
         const cycle = elapsed * speed;
         const strideAngle = Math.sin(cycle) * 0.44;
 
-        // 1. Natural forward torso lean during walking momentum
+        // Spine forward dynamic lean
         char.torso.rotation.x = 0.06;
 
-        // 2. Hip and thigh swing
+        // Hip flexion and extension
         char.leftHip.rotation.x = strideAngle;
         char.rightHip.rotation.x = -strideAngle;
 
-        // 3. Knee articulation with natural flexion and extension
-        // Forward swinging leg bends knee; weight-bearing stance leg straightens
+        // Knee kinematics: bends during swing phase
         char.leftKnee.rotation.x = strideAngle > 0 ? Math.sin(cycle) * 0.6 : 0.04;
         char.rightKnee.rotation.x = strideAngle < 0 ? Math.abs(Math.sin(cycle)) * 0.6 : 0.04;
 
-        // 4. Foot ankle roll (Heel strike -> Flat -> Toe push-off)
+        // Ankle roll: heel-strike to toe-off
         char.leftAnkle.rotation.x = strideAngle > 0.2 ? -0.22 : (strideAngle < -0.2 ? 0.28 : 0);
         char.rightAnkle.rotation.x = strideAngle < -0.2 ? -0.22 : (strideAngle > 0.2 ? 0.28 : 0);
 
-        // 5. Counter-rotating upper body (Shoulders swing in opposition to hips)
+        // Pelvic sway & double-frequency vertical bounce (human locomotion signature)
         char.torso.rotation.y = -Math.sin(cycle) * 0.08;
+        char.pelvis.position.y = 1.15 + Math.cos(cycle * 2.0) * 0.035;
+        char.torso.rotation.z = Math.sin(cycle) * 0.025;
+
+        // Anti-phase natural arm swing with elbow flex
         char.leftShoulder.rotation.x = -strideAngle * 0.68;
         char.rightShoulder.rotation.x = strideAngle * 0.68;
 
-        // 6. Arm elbow natural flexion
         char.leftElbow.rotation.x = -0.22 - Math.max(0, -strideAngle * 0.45);
         char.rightElbow.rotation.x = -0.22 - Math.max(0, strideAngle * 0.45);
-
-        // 7. Pelvis vertical bounce and weight transfer (Smooth dual-frequency sinusoid)
-        char.pelvis.position.y = 1.15 + Math.abs(Math.sin(cycle)) * 0.045;
-        char.torso.rotation.z = Math.sin(cycle) * 0.025; // Lateral hip sway
       };
 
-      // Smooth decay to relaxed resting standing posture
+      // Smoothly blend character back to natural idle posture
       const blendToIdle = (char: any) => {
         const decay = Math.min(1.0, delta * 5.0);
         char.leftHip.rotation.x = THREE.MathUtils.lerp(char.leftHip.rotation.x, 0, decay);
@@ -664,7 +850,7 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
 
       const currentPhase = phase;
 
-      // PHASE 1: Exterior Approach
+      // PHASE 1: Exterior Approach towards Grand Entrance
       if (currentPhase === 'approaching') {
         if (client.root.position.z > 3.6) {
           const move = delta * 3.4;
@@ -677,11 +863,11 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
           }
         } else {
           setPhase('entering');
-          setDialogueSpeaker('ETTL Concierge');
-          setDialogueText('Automatic biometric security clearance verified. Entering executive lobby.');
+          setDialogueSpeaker('ইটিটিএল কনসিয়ার্জ');
+          setDialogueRole('concierge');
+          setDialogueText('বায়োমেট্রিক নিরাপত্তা নিশ্চিতকরণ সম্পন্ন। প্রধান লবিতে প্রবেশ করছেন।');
         }
 
-        // Steadicam tracking shot behind client with gentle organic breathing
         const camZ = client.root.position.z + 5.2;
         cameraTargetPos.current.set(
           1.2 + Math.sin(elapsed * 0.8) * 0.05,
@@ -690,10 +876,9 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
         );
         cameraTargetLookAt.current.set(0, 1.9, client.root.position.z - 3);
       } 
-      // PHASE 2: Atrium Entry & Smooth Sliding Doors
+      // PHASE 2: Atrium Entry & Smooth Sliding Glass Doors
       else if (currentPhase === 'entering') {
         doorOpenProgress.current = Math.min(1.0, doorOpenProgress.current + delta * 1.8);
-        // Smooth easeOutCubic curve for sliding doors
         const doorEase = 1.0 - Math.pow(1.0 - doorOpenProgress.current, 3);
         if (leftDoorRef.current) leftDoorRef.current.position.x = -1.3 - doorEase * 1.6;
         if (rightDoorRef.current) rightDoorRef.current.position.x = 1.3 + doorEase * 1.6;
@@ -710,13 +895,15 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
         } else {
           blendToIdle(client);
           setPhase('at_desk');
-          setDialogueSpeaker('Receptionist');
-          setDialogueText('“Sir, how may I help you?”');
+          setDialogueSpeaker('অভ্যর্থনাকারী');
+          setDialogueRole('receptionist');
+          setDialogueText('“স্যার, আপনাকে কীভাবে সাহায্য করতে পারি?”');
           audioEngine.playDialogueChime('receptionist');
 
           setTimeout(() => {
-            setDialogueSpeaker('Client (You)');
-            setDialogueText('“I want to know more about the ETTL Investment.”');
+            setDialogueSpeaker('গ্রাহক (আপনি)');
+            setDialogueRole('client');
+            setDialogueText('“আমি ইটিটিএল ইনভেস্টমেন্ট সম্পর্কে বিস্তারিত জানতে চাই।”');
             audioEngine.playDialogueChime('manager');
             setTimeout(() => {
               setPhase('choosing');
@@ -731,17 +918,14 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
       else if (currentPhase === 'at_desk' || currentPhase === 'choosing') {
         blendToIdle(client);
 
-        // Receptionist welcoming gestures (Fluid organic wrist & head tilt)
         const breathe = Math.sin(elapsed * 1.6);
         receptionist.headGroup.rotation.y = Math.sin(elapsed * 1.4) * 0.12;
         receptionist.headGroup.rotation.z = Math.sin(elapsed * 1.8) * 0.04;
         receptionist.rightShoulder.rotation.x = -0.48 + breathe * 0.06;
         receptionist.rightElbow.rotation.x = -0.75 + Math.cos(elapsed * 1.6) * 0.05;
 
-        // Client attentive breathing posture
         client.torso.position.y = 0.45 + breathe * 0.015;
 
-        // Cinematic over-the-shoulder conversation camera angle
         cameraTargetPos.current.set(1.55 + Math.sin(elapsed * 0.7) * 0.03, 2.05, -2.1);
         cameraTargetLookAt.current.set(0.1, 1.72, -6.5);
       } 
@@ -767,16 +951,16 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
           setPhase('at_manager');
 
           const isPrices = userChoice === 'prices';
-          setDialogueSpeaker('Managing Partner');
+          setDialogueSpeaker('ম্যানেজিং পার্টনার');
+          setDialogueRole('manager');
           setDialogueText(
             isPrices
-              ? '“Welcome to ETTL. Our vehicle rental investment models yield 19.8% to 24.2% annualized cashflow, fully collateralized by physical luxury fleet assets.”'
-              : '“Welcome to ETTL. We operate institutional corporate leasing contracts with an average 88.5% fleet utilization across tech firms and luxury concierge networks.”'
+              ? '“ইটিটিএল ইনভেস্টমেন্টে স্বাগতম। আমাদের যানবাহন ভাড়ার বিনিয়োগ মডেলটি বার্ষিক ১৯.৮% থেকে ২৪.২% পর্যন্ত নিশ্চিত ক্যাশফ্লো ডিভিডেন্ড প্রদান করে, যা সরাসরি শারীরিক ফ্লিট সম্পদের মালিকানা দ্বারা সুরক্ষিত।”'
+              : '“ইটিটিএল ইনভেস্টমেন্টে স্বাগতম। আমরা বিভিন্ন শীর্ষস্থানীয় টেক প্রতিষ্ঠান ও ফাইভ-স্টার কনসিয়ার্জ নেটওয়ার্কে ৮৮.৫% কর্পোরেট ফ্লিট ইউটিলাইজেশন সহ দীর্ঘমেয়াদী লিজ চুক্তি পরিচালনা করি।”'
           );
           audioEngine.playDialogueChime('manager');
         }
 
-        // Smooth side-by-side tracking dolly shot
         cameraTargetPos.current.set(0, 2.35, client.root.position.z + 5.6);
         cameraTargetLookAt.current.set(0, 1.8, client.root.position.z - 4);
       } 
@@ -785,7 +969,6 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
         blendToIdle(client);
         blendToIdle(receptionist);
 
-        // Manager greeting gestures
         const managerBreathe = Math.sin(elapsed * 1.8);
         manager.torso.position.y = 0.45 + managerBreathe * 0.018;
         manager.leftShoulder.rotation.x = -0.42 + managerBreathe * 0.08;
@@ -795,13 +978,12 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
         cameraTargetPos.current.set(1.35, 2.05, -25.2);
         cameraTargetLookAt.current.set(0, 1.65, -29.2);
       } 
-      // PHASE 7: Push-through Zoom Dissolve
+      // PHASE 7: Push-through Zoom Dissolve into website
       else if (currentPhase === 'transitioning') {
         cameraTargetPos.current.set(0, 2.2, -34);
         cameraTargetLookAt.current.set(0, 2.2, -48);
       }
 
-      // Frame-rate independent exponential smoothing for buttery cinematic camera
       if (cameraRef.current) {
         const camDamping = 1.0 - Math.exp(-6.8 * delta);
         cameraRef.current.position.lerp(cameraTargetPos.current, camDamping);
@@ -836,154 +1018,165 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
   }, [phase, userChoice]);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-white select-none">
+    <div className="relative w-full h-screen overflow-hidden bg-white select-none font-sans">
       {/* 3D WebGL Canvas Mount */}
       <div ref={mountRef} className="absolute inset-0 z-0" />
 
-      {/* Top HUD Controls: Chapter Indicators, Sound & Skip Button */}
+      {/* Cinematic Anamorphic Aspect Ratio Framing Bars (Subtle 2.39:1 letterbox) */}
+      <div className="absolute top-0 left-0 right-0 h-4 bg-black/60 pointer-events-none z-20 backdrop-blur-[1px]" />
+      <div className="absolute bottom-0 left-0 right-0 h-4 bg-black/60 pointer-events-none z-20 backdrop-blur-[1px]" />
+
+      {/* Top HUD Controls: Chapter Indicators in Bengali, Sound & Prominent Skip Button */}
       <div className="absolute top-6 left-6 right-6 z-30 flex items-center justify-between pointer-events-auto">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/95 backdrop-blur-md border border-pink-200 text-slate-900 text-xs font-bold tracking-wider shadow-sm">
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/95 backdrop-blur-md border border-pink-200 text-slate-900 text-xs font-bold tracking-wider shadow-sm">
             <span className="w-2.5 h-2.5 rounded-full bg-[#D70F64] animate-pulse" />
-            <span>ETTL CINEMATIC INTRO</span>
+            <span>ইটিটিএল সিনেম্যাটিক ইন্ট্রো</span>
           </div>
 
           <button
             onClick={handleToggleSound}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/95 backdrop-blur-md border border-pink-200 text-slate-700 hover:text-[#D70F64] transition-all text-xs cursor-pointer shadow-sm"
-            title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-white/95 backdrop-blur-md border border-pink-200 text-slate-700 hover:text-[#D70F64] transition-all text-xs font-semibold cursor-pointer shadow-sm hover:scale-105"
+            title={isMuted ? 'শব্দ চালু করুন' : 'শব্দ বন্ধ করুন'}
           >
-            {isMuted ? <VolumeX className="w-3.5 h-3.5 text-slate-400" /> : <Volume2 className="w-3.5 h-3.5 text-[#D70F64]" />}
-            <span>{isMuted ? 'Audio Off' : 'Soundscape On'}</span>
+            {isMuted ? <VolumeX className="w-4 h-4 text-slate-400" /> : <Volume2 className="w-4 h-4 text-[#D70F64]" />}
+            <span>{isMuted ? 'শব্দ বন্ধ' : 'শব্দ চালু'}</span>
           </button>
         </div>
 
-        {/* Narrative Chapter Timeline Scrubber */}
-        <div className="hidden md:flex items-center gap-1.5 p-1 rounded-xl bg-white/95 backdrop-blur-md border border-pink-200 shadow-sm text-[11px] font-semibold text-slate-600">
+        {/* Narrative Chapter Timeline Scrubber in Bengali */}
+        <div className="hidden md:flex items-center gap-1.5 p-1.5 rounded-2xl bg-white/95 backdrop-blur-md border border-pink-200 shadow-sm text-xs font-semibold text-slate-600">
           <button
             onClick={() => jumpToPhase('approaching')}
-            className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-              phase === 'approaching' ? 'bg-[#D70F64] text-white' : 'hover:text-[#D70F64]'
+            className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
+              phase === 'approaching' ? 'bg-[#D70F64] text-white shadow-sm' : 'hover:text-[#D70F64]'
             }`}
           >
-            01 Approach
+            ০১ প্রবেশপথ
           </button>
           <button
             onClick={() => jumpToPhase('entering')}
-            className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-              phase === 'entering' ? 'bg-[#D70F64] text-white' : 'hover:text-[#D70F64]'
+            className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
+              phase === 'entering' ? 'bg-[#D70F64] text-white shadow-sm' : 'hover:text-[#D70F64]'
             }`}
           >
-            02 Atrium
+            ০২ প্রধান লবি
           </button>
           <button
             onClick={() => jumpToPhase('at_desk')}
-            className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-              phase === 'at_desk' || phase === 'choosing' ? 'bg-[#D70F64] text-white' : 'hover:text-[#D70F64]'
+            className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
+              phase === 'at_desk' || phase === 'choosing' ? 'bg-[#D70F64] text-white shadow-sm' : 'hover:text-[#D70F64]'
             }`}
           >
-            03 Reception
+            ০৩ অভ্যর্থনা
           </button>
           <button
             onClick={() => jumpToPhase('at_manager')}
-            className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-              phase === 'at_manager' ? 'bg-[#D70F64] text-white' : 'hover:text-[#D70F64]'
+            className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
+              phase === 'at_manager' ? 'bg-[#D70F64] text-white shadow-sm' : 'hover:text-[#D70F64]'
             }`}
           >
-            04 Executive Suite
+            ০৪ ডিরেক্টর স্যুট
           </button>
         </div>
 
-        {/* Prominent, Clearly Visible Skip Intro Button */}
+        {/* Prominent Skip Intro Button in Bengali */}
         <button
           onClick={handleSkip}
-          className="group flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white/95 hover:bg-[#D70F64] text-slate-900 hover:text-white font-bold text-xs tracking-wide uppercase backdrop-blur-md border border-pink-200 hover:border-[#D70F64] transition-all shadow-md hover:shadow-lg hover:shadow-[#D70F64]/25 cursor-pointer"
+          className="group flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/95 hover:bg-[#D70F64] text-slate-900 hover:text-white font-bold text-xs tracking-wide backdrop-blur-md border border-pink-200 hover:border-[#D70F64] transition-all shadow-md hover:shadow-lg hover:shadow-[#D70F64]/25 cursor-pointer hover:scale-105"
         >
-          <span>Skip Intro</span>
-          <FastForward className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          <span>ইন্ট্রো স্কিপ করুন</span>
+          <FastForward className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
         </button>
       </div>
 
-      {/* Interactive Choice Overlay (Phase: 'choosing') */}
+      {/* Interactive Floating Choice Overlay in Bengali (Phase: 'choosing') */}
       {phase === 'choosing' && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 bg-white/45 backdrop-blur-sm transition-all">
-          <div className="max-w-xl w-full text-center mb-8 animate-fade-in">
-            <p className="text-xs uppercase tracking-widest text-[#D70F64] font-bold mb-2">
-              Reception Desk Concierge
-            </p>
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 bg-white/45 backdrop-blur-sm transition-all animate-fade-in">
+          <div className="max-w-xl w-full text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-pink-100/80 border border-pink-200 text-xs font-bold text-[#D70F64] uppercase tracking-wider mb-3">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>অভ্যর্থনা ডেস্ক কনসিয়ার্জ</span>
+            </div>
             <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900 drop-shadow-sm">
-              How would you like to explore ETTL?
+              ইটিটিএল সম্পর্কে আপনি কীভাবে জানতে চান?
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg w-full">
-            {/* Button 1: See Prices */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-lg w-full">
+            {/* Button 1: See Prices & Returns in Bengali */}
             <button
               onClick={() => handleSelectChoice('prices')}
               onMouseEnter={() => audioEngine.playHover()}
-              className="group relative p-6 rounded-3xl bg-white hover:bg-pink-50/50 border-2 border-pink-200 hover:border-[#D70F64] transition-all duration-300 shadow-xl hover:scale-[1.03] text-left cursor-pointer"
+              className="group relative p-6 rounded-3xl bg-white hover:bg-pink-50/70 border-2 border-pink-200 hover:border-[#D70F64] transition-all duration-300 shadow-xl hover:scale-[1.03] text-left cursor-pointer"
             >
               <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center border border-pink-200 text-[#D70F64]">
-                  <DollarSign className="w-5 h-5" />
+                <div className="w-12 h-12 rounded-2xl bg-pink-50 flex items-center justify-center border border-pink-200 text-[#D70F64] group-hover:bg-[#D70F64] group-hover:text-white transition-all shadow-sm">
+                  <DollarSign className="w-6 h-6" />
                 </div>
-                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#D70F64] group-hover:translate-x-1 transition-all" />
+                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-[#D70F64] group-hover:translate-x-1 transition-all" />
               </div>
-              <h3 className="text-lg font-display font-bold text-slate-900 group-hover:text-[#D70F64] transition-colors mb-1">
-                See Prices & Yields
+              <h3 className="text-lg font-display font-bold text-slate-900 group-hover:text-[#D70F64] transition-colors mb-1.5">
+                মূল্য ও রিটার্ন দেখুন
               </h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Review capital allocation tiers ($25k–$1M+), vehicle unit costs, and projected 19.8%–24.2% annualized cash yields.
+              <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                বিনিয়োগের পরিমাণ ($৫০ হাজার–$১০ লাখ+), গাড়ির ইউনিট খরচ এবং বার্ষিক ১৯.৮%–২৪.২% নিশ্চিত ক্যাশ ডিভিডেন্ড রিটার্ন দেখুন।
               </p>
             </button>
 
-            {/* Button 2: See Details */}
+            {/* Button 2: See Details & Model in Bengali */}
             <button
               onClick={() => handleSelectChoice('details')}
               onMouseEnter={() => audioEngine.playHover()}
-              className="group relative p-6 rounded-3xl bg-white hover:bg-pink-50/50 border-2 border-pink-200 hover:border-[#D70F64] transition-all duration-300 shadow-xl hover:scale-[1.03] text-left cursor-pointer"
+              className="group relative p-6 rounded-3xl bg-white hover:bg-pink-50/70 border-2 border-pink-200 hover:border-[#D70F64] transition-all duration-300 shadow-xl hover:scale-[1.03] text-left cursor-pointer"
             >
               <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center border border-pink-200 text-[#D70F64]">
-                  <Info className="w-5 h-5" />
+                <div className="w-12 h-12 rounded-2xl bg-pink-50 flex items-center justify-center border border-pink-200 text-[#D70F64] group-hover:bg-[#D70F64] group-hover:text-white transition-all shadow-sm">
+                  <Info className="w-6 h-6" />
                 </div>
-                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#D70F64] group-hover:translate-x-1 transition-all" />
+                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-[#D70F64] group-hover:translate-x-1 transition-all" />
               </div>
-              <h3 className="text-lg font-display font-bold text-slate-900 group-hover:text-[#D70F64] transition-colors mb-1">
-                See Details & Model
+              <h3 className="text-lg font-display font-bold text-slate-900 group-hover:text-[#D70F64] transition-colors mb-1.5">
+                মডেল ও বিবরণ দেখুন
               </h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Understand the asset-backed vehicle rental expansion, corporate lease client base, and telematics asset custody.
+              <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                আসল গাড়িভিত্তিক রিটেইল ও কর্পোরেট লিজ নেটওয়ার্ক, টেলিমেটিক্স সিকিউরিটি ও আইনি সুরক্ষা কাঠামো জানুন।
               </p>
             </button>
           </div>
         </div>
       )}
 
-      {/* Manager's Office Final Option (Phase: 'at_manager') */}
+      {/* Manager's Office Final Option in Bengali (Phase: 'at_manager') */}
       {phase === 'at_manager' && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-end pb-32 p-6 bg-gradient-to-t from-white/95 via-transparent to-transparent pointer-events-none">
           <div className="pointer-events-auto max-w-md w-full text-center animate-fade-in">
             <button
               onClick={handleExploreProject}
               onMouseEnter={() => audioEngine.playHover()}
-              className="w-full py-4 px-6 rounded-2xl bg-[#D70F64] hover:bg-[#E21B70] text-white font-display font-bold text-base tracking-wide uppercase transition-all shadow-xl shadow-[#D70F64]/30 hover:scale-[1.02] flex items-center justify-center gap-3 cursor-pointer"
+              className="w-full py-4 px-6 rounded-2xl bg-[#D70F64] hover:bg-[#E21B70] text-white font-display font-bold text-base tracking-wide transition-all shadow-xl shadow-[#D70F64]/30 hover:scale-[1.02] flex items-center justify-center gap-3 cursor-pointer"
             >
-              <span>Explore Full Project Details</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>সম্পূর্ণ প্রজেক্টের বিস্তারিত দেখুন</span>
+              <ArrowRight className="w-5 h-5" />
             </button>
             <p className="mt-3 text-xs text-slate-600 font-medium">
-              Access 3D fleet showroom, interactive ROI calculator, and investor dossier
+              ৩ডি গাড়ির শোরুম, ইন্টারেক্টিভ আরওআই ক্যালকুলেটর এবং বিনিয়োগ ডসিয়ার খুলুন
             </p>
           </div>
         </div>
       )}
 
-      {/* Bottom Subtitle / Dialogue HUD with progressive typewriter reveal */}
+      {/* Bottom Subtitle / Dialogue HUD with Hind Siliguri Typography & Speaker Badges */}
       <div className="absolute bottom-8 left-6 right-6 z-20 flex justify-center pointer-events-none">
-        <div className="max-w-2xl w-full px-6 py-4 rounded-3xl bg-white/95 backdrop-blur-xl border border-pink-200 shadow-xl pointer-events-auto transition-all">
-          <div className="flex items-center gap-2 mb-1.5">
-            <ShieldCheck className="w-4 h-4 text-[#D70F64]" />
+        <div className="max-w-2xl w-full px-6 py-4.5 rounded-3xl bg-white/95 backdrop-blur-xl border border-pink-200 shadow-xl pointer-events-auto transition-all">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-6 h-6 rounded-full bg-pink-100 flex items-center justify-center text-[#D70F64]">
+              {dialogueRole === 'client' ? (
+                <User className="w-3.5 h-3.5" />
+              ) : (
+                <ShieldCheck className="w-3.5 h-3.5" />
+              )}
+            </div>
             <span className="text-xs font-bold uppercase tracking-wider text-[#D70F64]">
               {dialogueSpeaker}
             </span>

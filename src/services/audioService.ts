@@ -209,6 +209,55 @@ class AudioEngine {
       osc.stop(this.ctx.currentTime + 0.05);
     } catch {}
   }
+
+  /**
+   * Subtle vocal formant speech synthesizer for dialogue syllables
+   */
+  public playSpeechVoice(speaker: 'receptionist' | 'client' | 'manager' = 'receptionist') {
+    if (this.isMuted) return;
+    try {
+      this.initContext();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const formant1 = this.ctx.createBiquadFilter();
+      const gain = this.ctx.createGain();
+
+      // Formants simulating natural voice register
+      let baseFreq = 220; // receptionist (female soprano/alto)
+      let filterFreq = 1400;
+
+      if (speaker === 'client') {
+        baseFreq = 150; // client (young adult male)
+        filterFreq = 950;
+      } else if (speaker === 'manager') {
+        baseFreq = 120; // manager (deep confident baritone)
+        filterFreq = 800;
+      }
+
+      // Add slight micro-inflection (+/- 8Hz)
+      const pitchVariance = (Math.random() - 0.5) * 16;
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(baseFreq + pitchVariance, now);
+      osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.95 + pitchVariance, now + 0.07);
+
+      formant1.type = 'bandpass';
+      formant1.frequency.setValueAtTime(filterFreq, now);
+      formant1.Q.setValueAtTime(3.5, now);
+
+      gain.gain.setValueAtTime(0.025, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+
+      osc.connect(formant1);
+      formant1.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.07);
+    } catch {}
+  }
 }
 
 export const audioEngine = new AudioEngine();
+

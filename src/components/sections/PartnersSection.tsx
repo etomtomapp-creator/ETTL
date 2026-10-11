@@ -11,19 +11,19 @@ export const PartnersSection: React.FC = () => {
   };
 
   return (
-    <section id="partners" className="py-24 relative bg-white border-t border-pink-100">
+    <section id="partners" className="py-24 relative bg-white border-t border-pink-100 font-sans">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="flex items-center justify-center gap-2 text-xs uppercase tracking-widest text-[#D70F64] font-bold mb-2">
-            <span>04. Trust & Underwriting</span>
+            <span>০৪. আস্থা ও আন্ডাররাইটিং</span>
             <span aria-hidden="true" className="text-slate-300">·</span>
-            <span>Institutional Ecosystem</span>
+            <span>প্রাতিষ্ঠানিক ইকোসিস্টেম</span>
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-slate-900 tracking-tight mb-4">
-            Our Enterprise Infrastructure Partners
+            আমাদের এন্টারপ্রাইজ পার্টনার নেটওয়ার্ক
           </h2>
           <p className="text-sm md:text-base text-slate-600 leading-relaxed">
-            ETTL collaborates with industry-leading risk underwriters, satellite telematics providers, and executive corporate clients to safeguard capital and maximize vehicle utilization.
+            ইটিটিএল শীর্ষস্থানীয় রিস্ক আন্ডাররাইটার, স্যাটেলাইট টেলিমেটিক্স সরবরাহকারী এবং এক্সিকিউটিভ কর্পোরেট ক্লায়েন্টদের সাথে যৌথভাবে মূলধনের পূর্ণ নিরাপত্তা নিশ্চিত করে।
           </p>
         </div>
 
@@ -44,7 +44,7 @@ export const PartnersSection: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="text-xs uppercase tracking-wider text-slate-400 mb-1">
+                <div className="text-xs uppercase tracking-wider text-slate-400 mb-1 font-semibold">
                   {partner.category}
                 </div>
                 <h3 className="text-base font-display font-bold text-slate-900 mb-2">
@@ -59,7 +59,7 @@ export const PartnersSection: React.FC = () => {
                 <span className="text-[11px] tracking-widest uppercase font-mono font-bold text-slate-800">
                   {partner.logoText}
                 </span>
-                <span className="text-[10px] text-slate-400">Verified Integration</span>
+                <span className="text-[10px] text-slate-400 font-semibold">যাচাইকৃত পার্টনার</span>
               </div>
             </div>
           ))}

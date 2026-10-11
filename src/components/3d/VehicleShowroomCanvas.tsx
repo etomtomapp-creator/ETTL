@@ -414,13 +414,13 @@ export const VehicleShowroomCanvas: React.FC<VehicleShowroomCanvasProps> = ({
       {/* Three.js Canvas Container */}
       <div ref={mountRef} className="absolute inset-0 cursor-grab active:cursor-grabbing" />
 
-      {/* Top Showroom HUD */}
-      <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+      {/* Top Showroom HUD in Bangla */}
+      <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none font-sans">
         <div className="px-3.5 py-1.5 rounded-xl bg-white/90 backdrop-blur-md border border-pink-100 text-xs font-semibold text-slate-800 flex items-center gap-2 shadow-sm">
           <Eye className="w-3.5 h-3.5 text-[#D70F64]" />
-          <span>Interactive 360° Studio</span>
+          <span>ইন্টারেক্টিভ ৩৬০° স্টুডিও</span>
           <span className="text-slate-300">·</span>
-          <span className="text-xs text-[#D70F64]">Drag to orbit</span>
+          <span className="text-xs text-[#D70F64] font-bold">ঘুরিয়ে দেখুন</span>
         </div>
 
         <div className="flex items-center gap-2 pointer-events-auto">
@@ -430,14 +430,14 @@ export const VehicleShowroomCanvas: React.FC<VehicleShowroomCanvasProps> = ({
               setAutoRotate(!autoRotate);
               audioEngine.playClick();
             }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium border backdrop-blur-md transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold border backdrop-blur-md transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${
               autoRotate
                 ? 'bg-[#D70F64] border-[#D70F64] text-white'
                 : 'bg-white/90 border-slate-200 text-slate-700 hover:text-slate-900'
             }`}
           >
             <RotateCw className={`w-3.5 h-3.5 ${autoRotate ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Turntable</span>
+            <span className="hidden sm:inline">স্বয়ংক্রিয় ঘূর্ণন</span>
           </button>
 
           {/* Headlights Toggle */}
@@ -446,45 +446,45 @@ export const VehicleShowroomCanvas: React.FC<VehicleShowroomCanvasProps> = ({
               setHeadlightsOn(!headlightsOn);
               audioEngine.playClick();
             }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium border backdrop-blur-md transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold border backdrop-blur-md transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${
               headlightsOn
                 ? 'bg-pink-100 border-[#D70F64] text-[#D70F64]'
                 : 'bg-white/90 border-slate-200 text-slate-700 hover:text-slate-900'
             }`}
           >
             <Sun className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">LED Lighting</span>
+            <span className="hidden sm:inline">হেডলাইট</span>
           </button>
         </div>
       </div>
 
-      {/* Bottom Floating Control Bar (Camera Presets & Zoom) */}
-      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+      {/* Bottom Floating Control Bar (Camera Presets & Zoom in Bangla) */}
+      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between pointer-events-none font-sans">
         {/* Preset Angle Buttons */}
         <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/90 backdrop-blur-md border border-pink-100 shadow-sm pointer-events-auto">
           <button
             onClick={() => setPresetAngle('front')}
             className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 hover:text-[#D70F64] hover:bg-pink-50 transition-colors cursor-pointer"
           >
-            Front 3/4
+            সামনে
           </button>
           <button
             onClick={() => setPresetAngle('side')}
             className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 hover:text-[#D70F64] hover:bg-pink-50 transition-colors cursor-pointer"
           >
-            Profile
+            পাশে
           </button>
           <button
             onClick={() => setPresetAngle('rear')}
             className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 hover:text-[#D70F64] hover:bg-pink-50 transition-colors cursor-pointer"
           >
-            Rear
+            পেছনে
           </button>
           <button
             onClick={() => setPresetAngle('top')}
             className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 hover:text-[#D70F64] hover:bg-pink-50 transition-colors cursor-pointer"
           >
-            Executive Top
+            উপর থেকে
           </button>
         </div>
 

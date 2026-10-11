@@ -3,7 +3,7 @@ import { ShieldCheck } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="bg-white border-t border-pink-100 text-slate-500 py-16">
+    <footer className="bg-white border-t border-pink-100 text-slate-500 py-16 font-sans">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-pink-100/70">
           {/* Brand & Wordmark (2 cols) */}
@@ -12,43 +12,43 @@ export const Footer: React.FC = () => {
               <span className="text-[#D70F64]">
                 ETTL
               </span>
-              <span className="text-xs uppercase tracking-widest text-[#D70F64] font-sans font-semibold border-l border-pink-200 pl-2">
-                Investment Zone
+              <span className="text-xs uppercase tracking-widest text-[#D70F64] font-semibold border-l border-pink-200 pl-2">
+                ইনভেস্টমেন্ট জোন
               </span>
             </div>
             <p className="text-xs md:text-sm text-slate-600 leading-relaxed max-w-sm">
-              Institutional vehicle fleet syndication platform. Connecting high-net-worth investors with asset-backed mobility cashflows across premier corporate and VIP lease networks.
+              প্রাতিষ্ঠানিক যানবাহন ফ্লিট সিন্ডিকেশন প্ল্যাটফর্ম। উচ্চ সম্পদশালী বিনিয়োগকারীদের সাথে প্রিমিয়ার কর্পোরেট এবং ভিআইপি লিজ নেটওয়ার্কের বাস্তব গাড়িভিত্তিক ক্যাশফ্লো যুক্ত করে।
             </p>
-            <div className="flex items-center gap-2 text-xs text-[#D70F64] font-medium">
+            <div className="flex items-center gap-2 text-xs text-[#D70F64] font-semibold">
               <ShieldCheck className="w-4 h-4" />
-              <span>Registered Alternative Investment Syndicate #ETTL-8429</span>
+              <span>নিবন্ধিত অল্টারনেটিভ ইনভেস্টমেন্ট সিন্ডিকেট #ETTL-8429</span>
             </div>
           </div>
 
           {/* Quick Nav Links */}
           <div className="space-y-3">
             <h4 className="text-xs uppercase tracking-wider text-slate-900 font-bold">
-              Platform
+              প্ল্যাটফর্ম
             </h4>
-            <ul className="space-y-2 text-xs">
+            <ul className="space-y-2 text-xs font-semibold">
               <li>
                 <a href="#showroom" className="hover:text-[#D70F64] transition-colors">
-                  Fleet Showroom
+                  ফ্লিট শোরুম
                 </a>
               </li>
               <li>
                 <a href="#investment" className="hover:text-[#D70F64] transition-colors">
-                  Investment Model
+                  বিনিয়োগ মডেল
                 </a>
               </li>
               <li>
                 <a href="#calculator" className="hover:text-[#D70F64] transition-colors">
-                  ROI Simulator
+                  আরওআই সিমুলেটর
                 </a>
               </li>
               <li>
                 <a href="#how-it-works" className="hover:text-[#D70F64] transition-colors">
-                  Operational Journey
+                  কার্যপদ্ধতি
                 </a>
               </li>
             </ul>
@@ -57,34 +57,34 @@ export const Footer: React.FC = () => {
           {/* Vehicle Fleet Tiers */}
           <div className="space-y-3">
             <h4 className="text-xs uppercase tracking-wider text-slate-900 font-bold">
-              Fleet Assets
+              ফ্লিট সম্পদসমূহ
             </h4>
-            <ul className="space-y-2 text-xs text-slate-600">
-              <li>Executive Sedans (Hybrid V8)</li>
-              <li>Grand Tourer Luxury SUVs</li>
-              <li>High-Performance 800V EVs</li>
-              <li>Armored Diplomatic Shuttles</li>
+            <ul className="space-y-2 text-xs text-slate-600 font-medium">
+              <li>এক্সিকিউটিভ সেডান (হাইব্রিড V8)</li>
+              <li>গ্র্যান্ড ট্যুরার লাক্সারি এসইউভি</li>
+              <li>উচ্চ-ক্ষমতাসম্পন্ন ৮০০V ইভি</li>
+              <li>আর্মর্ড ডিপ্লোম্যাটিক শাটল</li>
             </ul>
           </div>
 
           {/* Compliance & Contact */}
           <div className="space-y-3">
             <h4 className="text-xs uppercase tracking-wider text-slate-900 font-bold">
-              Private Wealth Desk
+              প্রাইভেট ওয়েলথ ডেস্ক
             </h4>
-            <div className="text-xs space-y-1.5 text-slate-600">
-              <p>One Executive Plaza, Level 42</p>
-              <p>Mon - Fri: 08:00 - 18:00 EST</p>
-              <p className="text-[#D70F64] font-mono font-semibold pt-1">investors@ettl-investment.com</p>
+            <div className="text-xs space-y-1.5 text-slate-600 font-medium">
+              <p>ওয়ান এক্সিকিউটিভ প্লাজা, লেভেল ৪২</p>
+              <p>সোম - শুক্র: সকাল ০৮:০০ - সন্ধ্যা ০৬:০০ EST</p>
+              <p className="text-[#D70F64] font-mono font-bold pt-1">investors@ettl-investment.com</p>
             </div>
           </div>
         </div>
 
         {/* Bottom Bar & Risk Disclosures */}
-        <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-[11px] text-slate-400">
-          <p>© {new Date().getFullYear()} ETTL Investment Zone. All rights reserved.</p>
+        <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+          <p>© {new Date().getFullYear()} ইটিটিএল ইনভেস্টমেন্ট জোন। সর্বস্বত্ব সংরক্ষিত।</p>
           <p className="max-w-xl text-center md:text-right text-slate-500">
-            Disclaimer: Private Placement Memorandum available to accredited investors only. Past vehicle utilization and lease yields do not guarantee future performance. Vehicle assets are held in independent bankruptcy-remote SPV trusts.
+            বিজ্ঞপ্তি: প্রাইভেট প্লেসমেন্ট মেমোরেন্ডাম শুধুমাত্র অনুমোদিত বিনিয়োগকারীদের জন্য প্রযোজ্য। অতীতের ইউটিলাইজেশন বা মুনাফা ভবিষ্যতের রিটার্নের শতভাগ নিশ্চয়তা দেয় না। সকল যানবাহন স্বতন্ত্র এসপিভি ট্রাস্টের অধীনে রক্ষিত।
           </p>
         </div>
       </div>
