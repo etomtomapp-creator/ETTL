@@ -1,0 +1,6 @@
+{
+  "name": "ETTL Investment — Luxury Vehicle Rental Investment Platform",
+  "description": "Ultra-premium 3D interactive investor experience featuring cinematic office walkthrough, luxury fleet showroom, and dynamic ROI simulator.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
